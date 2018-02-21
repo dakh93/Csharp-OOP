@@ -1,17 +1,50 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.Linq;
 
-namespace _13.FamilyTree
+public class Person
 {
-    class Person
+    private List<Person> children;
+
+    public Person()
     {
-        public string Name { get; set; }
+        this.children = new List<Person>();
+    }
 
-        public string Date { get; set; }
+    public Person(string name, string birthdate) : this()
+    {
+        this.Name = name;
+        this.Birthdate = birthdate;
+    }
 
-        public List<Person> Parents = new List<Person>();
+    public string Name { get; set; }
+    public string Birthdate { get; set; }
 
-        public List<Person> Children = new List<Person>();
+    public IReadOnlyList<Person> Children => this.children.AsReadOnly();
+
+    public void AddChild(Person child)
+    {
+        this.children.Add(child);
+    }
+
+    public void AddChildrenInfo(string name, string birthdate)
+    {
+        if (this.children.FirstOrDefault(c => c.Name == name) != null)
+        {
+            this.children
+                .FirstOrDefault(c => c.Name == name)
+                .Birthdate = birthdate;
+            return;
+        }
+        if (this.children.FirstOrDefault(c => c.Birthdate == birthdate) != null)
+        {
+            this.children
+                .FirstOrDefault(c => c.Birthdate == birthdate)
+                .Name = name;
+        }
+    }
+
+    public Person FindChild(string childName)
+    {
+        return this.children.FirstOrDefault(c => c.Name == childName);
     }
 }

@@ -1,212 +1,127 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
-namespace _13.FamilyTree
+public class StartUp
 {
-    class Program
+    public static void Main()
     {
-        static void Main(string[] args)
+        var people = new List<Person>();
+        var searchedPersonParam = Console.ReadLine();
+
+        while (true)
         {
-            string searchedPerson = Console.ReadLine();
+            var input = Console.ReadLine();
+            if (input == "End") break;
 
-
-            var input =
-                Console.ReadLine()
-                    .Split(new[] {'-'}, StringSplitOptions.RemoveEmptyEntries)
-                    .ToArray();
-
-            var parentsDates = new List<string>();
-            var childrenDates = new List<string>();
-
-            var data = new Dictionary<string, string>();
-            var personBd = new Dictionary<string, string>();
-
-            while (input[0] != "End")
+            if (input.Contains("-"))
             {
+                var tokens = input
+                            .Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(x => x.Trim())
+                            .ToArray();
+                var parentToken = tokens[0];
+                var childToken = tokens[1];
 
+                var parent = CreatePerson(parentToken);
 
-                if (input.Length == 2)
+                var child = CreatePerson(childToken);
+
+                AddParentIfMissing(people, parent);
+
+                if (parent.Name != null)
                 {
-                    var parent = input[0];
-                    var child = input[1];
-                    data[parent.Trim()] = child.Trim();
-                }
-                else if (input.Length == 1)
-                {
-                    var split = input[0].Split(' ');
-
-                    var personName = $"{split[0]} {split[1]}";
-                    var personBirth = split[2];
-
-                    personBd[personName] = personBirth.Trim();
-                }
-
-
-                input = Console.ReadLine()
-                    .Split(new[] {'-'}, StringSplitOptions.RemoveEmptyEntries)
-                    .ToArray();
-            }
-
-
-
-            Dictionary<string, string> dataSecond = new Dictionary<string, string>();
-            foreach (var fill in data)
-            {
-                var parent = fill.Key;
-                var child = fill.Value;
-
-                foreach (var people in personBd)
-                {
-                    //CHANGE KEY
-                    var keySwap = string.Empty;
-                    var valueSwap = string.Empty;
-                    if (parent.Contains('/'))
-                    {
-                        //DATE
-                        keySwap = personBd.Where(x => x.Value == parent).Select(x => x.Key).First();
-
-                    }
-                    else
-                    {
-                        //NAME
-                        keySwap = personBd.Where(x => x.Key == parent).Select(x => x.Value).First();
-
-                    }
-
-                    if (child.Contains('/'))
-                    {
-                        //DATE
-                        valueSwap = personBd.Where(x => x.Value == child).Select(x => x.Key).First();
-
-                    }
-                    else
-                    {
-                        //NAME
-                        valueSwap = personBd.Where(x => x.Key == child).Select(x => x.Value).First();
-
-                    }
-
-                    dataSecond[keySwap] = valueSwap;
-                }
-
-            }
-
-            var final = new List<Person>();
-            foreach (var curr in data)
-            {
-                var parent = curr.Key;
-                var child = curr.Value;
-
-                bool isDatefirst = false;
-                if (parent.Contains('/'))
-                {
-                    isDatefirst = true;
-                }
-
-                bool isDateSecond = false;
-                if (child.Contains('/'))
-                {
-                    isDateSecond = true;
-                }
-
-
-                Person person = new Person();
-                if (isDatefirst)
-                {
-                    var name = personBd.Where(x => x.Value == parent).Select(x => x.Key).First();
-                    person.Name = name;
-                    person.Date = parent;
+                    people.FirstOrDefault(p => p.Name == parent.Name)
+                          .AddChild(child);
                 }
                 else
                 {
-                    var date = personBd.Where(x => x.Key == parent).Select(x => x.Value).First();
-                    person.Name = parent;
-                    person.Date = date;
-                }
-                Person chPerson = new Person();
-                if (isDateSecond)
-                {
-                    var name = personBd.Where(x => x.Value == child).Select(x => x.Key).First();
-                    chPerson.Name = name;
-                    chPerson.Date = child;
-                }
-                else
-                {
-                    var date = personBd.Where(x => x.Key == child).Select(x => x.Value).First();
-                    chPerson.Name = parent;
-                    chPerson.Date = date;
-                }
-
-
-                if (!final.Any(x => x.Date.Equals(person.Date)))
-                {
-                    person.Children.Add(chPerson);
-                    final.Add(person);
-                }
-                else
-                {
-                    if (!person.Children.Any(x => x.Date.Equals(chPerson.Date)))
-                    {
-                        person.Children.Add(chPerson);
-                        final.Add(person);
-                    }
-                }
-
-                if (!final.Any(x => x.Date.Equals(chPerson.Date)))
-                {
-                    chPerson.Parents.Add(person);
-                   // final.Add(chPerson);
-                    
-                }
-                else
-                {
-                    if (!chPerson.Parents.Any(x => x.Date.Equals(person.Date)))
-                    {
-                        chPerson.Parents.Add(person);
-                        //final.Add(chPerson);
-                    }
+                    people.FirstOrDefault(p => p.Birthdate == parent.Birthdate)
+                          .AddChild(child);
                 }
             }
+            else
+            {
+                var tokens = input
+                            .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                var name = $"{tokens[0]} {tokens[1]}";
+                var birthdate = tokens[2];
+                var isExistingPerson = false;
 
-           
-            
+                for (int i = 0; i < people.Count; i++)
+                {
+                    if (people[i].Name == name)
+                    {
+                        people[i].Birthdate = birthdate;
+                        isExistingPerson = true;
+                    }
+                    if (people[i].Birthdate == birthdate)
+                    {
+                        people[i].Name = name;
+                        isExistingPerson = true;
+                    }
+                    people[i].AddChildrenInfo(name, birthdate);
+                }
+
+                if (!isExistingPerson)
+                {
+                    people.Add(new Person(name, birthdate));
+                }
+            }
         }
 
-        private static string SearchForParentByName(
-            Dictionary<string, string> personBd, string name)
-        {
-            var result = String.Empty;
-            foreach (var person in personBd)
-            {
-                if (person.Key == name)
-                {
-                    result = person.Value;
-                    break;
-                }
-
-            }
-            return result;
-        }
-
-        private static string SearchForParentByDate(
-            Dictionary<string, string> personBd, string date)
-        {
-            var result = String.Empty;
-            foreach (var person in personBd)
-            {
-                if (person.Value == date)
-                {
-                    result = person.Key;
-                    break;
-                }
-
-            }
-            return result;
-        }
+        PrintParentsAndChildren(people, searchedPersonParam);
     }
 
-    
-    
+    private static Person CreatePerson(string personParam)
+    {
+        var person = new Person();
+        if (IsDate(personParam))
+        {
+            person.Birthdate = personParam;
+        }
+        else
+        {
+            person.Name = personParam;
+        }
+        return person;
+    }
+
+    private static void PrintParentsAndChildren(List<Person> people, string personParam)
+    {
+        Person person = people.FirstOrDefault(p => p.Birthdate == personParam ||
+                                                   p.Name == personParam);
+        var builder = new StringBuilder();
+
+        builder.AppendLine($"{person.Name} {person.Birthdate}");
+
+        builder.AppendLine("Parents:");
+        people.Where(p => p.FindChild(person.Name) != null)
+              .ToList()
+              .ForEach(p => builder.AppendLine($"{p.Name} {p.Birthdate}"));
+
+        builder.AppendLine("Children:");
+        person.Children
+              .ToList()
+              .ForEach(c => builder.AppendLine($"{c.Name} {c.Birthdate}"));
+
+        Console.WriteLine(builder);
+    }
+
+    private static void AddParentIfMissing(List<Person> people, Person parent)
+    {
+        if ((parent.Name != null && people.Any(p => p.Name == parent.Name)) ||
+            (parent.Birthdate != null & people.Any(p => p.Birthdate == parent.Birthdate)))
+        {
+            return;
+        }
+
+        people.Add(parent);
+    }
+
+    public static bool IsDate(string s)
+    {
+        return s.Contains("/");
+    }
 }
